@@ -60,3 +60,4 @@ File imgFile = new File('directoryPath/fileName.png');
 imgFile.writeAsBytesSync(image);
 ```
 **For more thorough implementation guide, check the [example](./example).**# Flutter-Image-Painter
+# Flutter-Image-Painter
