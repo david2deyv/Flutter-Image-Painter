@@ -45,6 +45,10 @@ class ImagePainter extends StatefulWidget {
     this.onStrokeWidthChanged,
     this.onPaintModeChanged,
     this.textDelegate,
+    this.modeIcon,
+    this.fillTextStyle,
+    this.iconColor,
+    this.showControlsPanel = true,
   }) : super(key: key);
 
   ///Constructor for loading image from network url.
@@ -150,6 +154,7 @@ class ImagePainter extends StatefulWidget {
     Widget? undoIcon,
     Widget? clearAllIcon,
     Widget? colorIcon,
+    Widget? modeIcon,
     PaintMode? initialPaintMode,
     double? initialStrokeWidth,
     Color? initialColor,
@@ -158,6 +163,9 @@ class ImagePainter extends StatefulWidget {
     ValueChanged<double>? onStrokeWidthChanged,
     TextDelegate? textDelegate,
     bool? controlsAtTop,
+    Color? iconColor,
+    TextStyle? fillTextStyle,
+    bool? showControlsPanel,
   }) {
     return ImagePainter._(
       key: key,
@@ -170,6 +178,7 @@ class ImagePainter extends StatefulWidget {
       brushIcon: brushIcon,
       undoIcon: undoIcon,
       colorIcon: colorIcon,
+      modeIcon: modeIcon,
       clearAllIcon: clearAllIcon,
       initialPaintMode: initialPaintMode,
       initialColor: initialColor,
@@ -178,7 +187,10 @@ class ImagePainter extends StatefulWidget {
       onColorChanged: onColorChanged,
       onStrokeWidthChanged: onStrokeWidthChanged,
       textDelegate: textDelegate,
+      iconColor: iconColor,
+      fillTextStyle: fillTextStyle,
       controlsAtTop: controlsAtTop ?? true,
+      showControlsPanel: showControlsPanel ?? true,
     );
   }
 
@@ -332,6 +344,14 @@ class ImagePainter extends StatefulWidget {
   //the text delegate
   final TextDelegate? textDelegate;
 
+  final Widget? modeIcon;
+
+  final bool showControlsPanel;
+
+  final Color? iconColor;
+
+  final TextStyle? fillTextStyle;
+
   @override
   ImagePainterState createState() => ImagePainterState();
 }
@@ -347,6 +367,7 @@ class ImagePainterState extends State<ImagePainter> {
 
   int _strokeMultiplier = 1;
   late TextDelegate textDelegate;
+
   @override
   void initState() {
     super.initState();
@@ -479,7 +500,8 @@ class ImagePainterState extends State<ImagePainter> {
       width: widget.width ?? double.maxFinite,
       child: Column(
         children: [
-          if (widget.controlsAtTop) _buildControls(),
+          if (widget.controlsAtTop && widget.showControlsPanel)
+            _buildControls(),
           Expanded(
             child: FittedBox(
               alignment: FractionalOffset.center,
@@ -510,7 +532,8 @@ class ImagePainterState extends State<ImagePainter> {
               ),
             ),
           ),
-          if (!widget.controlsAtTop) _buildControls(),
+          if (!widget.controlsAtTop && widget.showControlsPanel)
+            _buildControls(),
           SizedBox(height: MediaQuery.of(context).padding.bottom)
         ],
       ),
@@ -559,13 +582,15 @@ class ImagePainterState extends State<ImagePainter> {
               IconButton(
                 tooltip: textDelegate.undo,
                 icon: widget.undoIcon ??
-                    Icon(Icons.reply, color: Colors.grey[700]),
+                    Icon(Icons.reply,
+                        color: widget.iconColor ?? Colors.grey[700]),
                 onPressed: () => _controller.undo(),
               ),
               IconButton(
                 tooltip: textDelegate.clearAllProgress,
                 icon: widget.clearAllIcon ??
-                    Icon(Icons.clear, color: Colors.grey[700]),
+                    Icon(Icons.clear,
+                        color: widget.iconColor ?? Colors.grey[700]),
                 onPressed: () => _controller.clear(),
               ),
             ],
@@ -660,6 +685,7 @@ class ImagePainterState extends State<ImagePainter> {
             children: paintModes(textDelegate)
                 .map(
                   (item) => SelectionItems(
+                    iconColor: widget.iconColor,
                     data: item,
                     isSelected: _controller.mode == item.mode,
                     onTap: () {
@@ -785,7 +811,7 @@ class ImagePainterState extends State<ImagePainter> {
   Widget _buildControls() {
     return Container(
       padding: const EdgeInsets.all(4),
-      color: Colors.grey[200],
+      color: Colors.white,
       child: Row(
         children: [
           AnimatedBuilder(
@@ -799,7 +825,8 @@ class ImagePainterState extends State<ImagePainter> {
                 shape: ContinuousRectangleBorder(
                   borderRadius: BorderRadius.circular(40),
                 ),
-                icon: Icon(icon, color: Colors.grey[700]),
+                icon: widget.modeIcon ??
+                    Icon(icon, color: widget.iconColor ?? Colors.grey[700]),
                 itemBuilder: (_) => [_showOptionsRow()],
               );
             },
@@ -818,7 +845,8 @@ class ImagePainterState extends State<ImagePainter> {
                       padding: const EdgeInsets.all(2.0),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.grey),
+                        border:
+                            Border.all(color: widget.iconColor ?? Colors.grey),
                         color: _controller.color,
                       ),
                     ),
@@ -831,8 +859,8 @@ class ImagePainterState extends State<ImagePainter> {
             shape: ContinuousRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            icon:
-                widget.brushIcon ?? Icon(Icons.brush, color: Colors.grey[700]),
+            icon: widget.brushIcon ??
+                Icon(Icons.brush, color: widget.iconColor ?? Colors.grey[700]),
             itemBuilder: (_) => [_showRangeSlider()],
           ),
           AnimatedBuilder(
@@ -842,6 +870,7 @@ class ImagePainterState extends State<ImagePainter> {
                 return Row(
                   children: [
                     Checkbox.adaptive(
+                      activeColor: widget.iconColor,
                       value: _controller.shouldFill,
                       onChanged: (val) {
                         _controller.update(fill: val);
@@ -849,7 +878,8 @@ class ImagePainterState extends State<ImagePainter> {
                     ),
                     Text(
                       'Fill',
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: widget.fillTextStyle ??
+                          Theme.of(context).textTheme.bodyMedium,
                     )
                   ],
                 );
@@ -861,13 +891,14 @@ class ImagePainterState extends State<ImagePainter> {
           const Spacer(),
           IconButton(
             tooltip: textDelegate.undo,
-            icon: widget.undoIcon ?? Icon(Icons.reply, color: Colors.grey[700]),
+            icon: widget.undoIcon ??
+                Icon(Icons.reply, color: widget.iconColor ?? Colors.grey[700]),
             onPressed: () => _controller.undo(),
           ),
           IconButton(
             tooltip: textDelegate.clearAllProgress,
             icon: widget.clearAllIcon ??
-                Icon(Icons.clear, color: Colors.grey[700]),
+                Icon(Icons.clear, color: widget.iconColor ?? Colors.grey[700]),
             onPressed: () => _controller.clear(),
           ),
         ],
