@@ -275,7 +275,6 @@ class ImagePainter extends StatefulWidget {
       controlsAtTop: controlsAtTop ?? true,
     );
   }
-
   ///Only accessible through [ImagePainter.network] constructor.
   final String? networkUrl;
 
